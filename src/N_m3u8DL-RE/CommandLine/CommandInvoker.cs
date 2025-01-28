@@ -306,8 +306,8 @@ internal static partial class CommandInvoker
             result.ErrorMessage = "Invalid log path!";
             return null;
         }
-        var dir = Path.GetDirectoryName(path);
-        var filename = Path.GetFileName(path);
+        var dir = Path.GetDirectoryName(input);
+        var filename = Path.GetFileName(input);
         var newName = OtherUtil.GetValidFileName(filename);
         if (string.IsNullOrEmpty(newName))
         {
