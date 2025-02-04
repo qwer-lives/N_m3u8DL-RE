@@ -33,6 +33,7 @@ internal class SimpleLiveRecordManager2
     int WAIT_SEC = 0; // 刷新间隔
     ConcurrentDictionary<int, int> RecordedDurDic = new(); // 已录制时长
     ConcurrentDictionary<int, int> RefreshedDurDic = new(); // 已刷新出的时长
+    ConcurrentDictionary<int, DateTime> LastNewSegmentsTimeDic = new(); // 上次发现新片段的时间戳
     ConcurrentDictionary<int, BufferBlock<List<MediaSegment>>> BlockDic = new(); // 各流的Block
     ConcurrentDictionary<int, bool> SamePathDic = new(); // 各流是否allSamePath
     ConcurrentDictionary<int, bool> RecordLimitReachedDic = new(); // 各流是否达到上限
@@ -682,11 +683,26 @@ internal class SimpleLiveRecordManager2
                     DateTimeDic[task.Id] = dt != null ? GetUnixTimestamp(dt.Value) : 0L;
                     // 累加已获取到的时长
                     RefreshedDurDic[task.Id] += (int)newList.Sum(s => s.Duration);
+                    LastNewSegmentsTimeDic[task.Id] = DateTime.Now;
                 }
-                else if (!streamSpec.Playlist!.IsLive && BlockDic[task.Id].Count == 0)
+                else if (BlockDic[task.Id].Count == 0)
                 {
-                    LiveFinishedDic[task.Id] = true;
-                    BlockDic[task.Id].Complete();
+                    if (!streamSpec.Playlist!.IsLive)
+                    {
+                        Logger.Warn($"Found end of playlist, marking task {task.Id} as finished");
+                        LiveFinishedDic[task.Id] = true;
+                        BlockDic[task.Id].Complete();
+                    }
+                    else
+                    {
+                        var timeSinceLastSegments = (DateTime.Now - LastNewSegmentsTimeDic[task.Id]).TotalSeconds;
+                        if (timeSinceLastSegments > 300)
+                        {
+                            Logger.Warn($"5min elapsed since last new segments, marking task {task.Id} as finished");
+                            LiveFinishedDic[task.Id] = true;
+                            BlockDic[task.Id].Complete();
+                        }
+                    }
                 }
 
                 if (!STOP_FLAG && RefreshedDurDic[task.Id] >= DownloaderConfig.MyOptions.LiveRecordLimit?.TotalSeconds)
@@ -843,6 +859,7 @@ internal class SimpleLiveRecordManager2
                 DateTimeDic[task.Id] = 0L;
                 RecordedDurDic[task.Id] = 0;
                 RefreshedDurDic[task.Id] = 0;
+                LastNewSegmentsTimeDic[task.Id] = DateTime.Now;
                 MaxIndexDic[task.Id] = item.Playlist?.MediaParts[0].MediaSegments.LastOrDefault()?.Index ?? 0L; // 最大Index
                 BlockDic[task.Id] = new BufferBlock<List<MediaSegment>>();
                 return (item, task);
