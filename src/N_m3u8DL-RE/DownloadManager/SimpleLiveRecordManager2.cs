@@ -619,7 +619,8 @@ internal class SimpleLiveRecordManager2
             if (STOP_FLAG && source.Count == 0) 
                 break;
         }
-
+        
+        Logger.Warn("Out of RecordStreamAsync");
         if (fileOutputStream == null) return true;
         
         if (!DownloaderConfig.MyOptions.LivePipeMux)
@@ -652,14 +653,24 @@ internal class SimpleLiveRecordManager2
             {
                 var streamSpec = dic.Key;
                 var task = dic.Value;
-
+                
                 // 达到上限时 不需要刷新了
                 if (RecordLimitReachedDic[task.Id] || LiveFinishedDic[task.Id])
                     return;
 
                 // 如果 MediaParts 为空，播放列表可能已损坏，跳过并下次重试
-                if (streamSpec.Playlist!.MediaParts.Count == 0)
+                var timeSinceLastSegments = (DateTime.Now - LastNewSegmentsTimeDic[task.Id]).TotalSeconds;
+                Logger.Warn($"{timeSinceLastSegments} elapsed since last new segments");
+                        
+                if (streamSpec.Playlist!.MediaParts.Count == 0) {
+                    if (timeSinceLastSegments > 120)
+                    {
+                        Logger.Warn($"2min elapsed since last new segments, marking task {task.Id} as finished");
+                        LiveFinishedDic[task.Id] = true;
+                        BlockDic[task.Id].Complete();
+                    }
                     return;
+                }
                 
                 var allHasDatetime = streamSpec.Playlist!.MediaParts[0].MediaSegments.All(s => s.DateTime != null);
                 if (!SamePathDic.ContainsKey(task.Id))
@@ -687,22 +698,21 @@ internal class SimpleLiveRecordManager2
                 }
                 else if (BlockDic[task.Id].Count == 0)
                 {
-                    if (!streamSpec.Playlist!.IsLive)
+                    /*if (!streamSpec.Playlist!.IsLive)
                     {
                         Logger.Warn($"Found end of playlist, marking task {task.Id} as finished");
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
-                    }
-                    else
+                    }*/
+                    if (timeSinceLastSegments > 120)
                     {
-                        var timeSinceLastSegments = (DateTime.Now - LastNewSegmentsTimeDic[task.Id]).TotalSeconds;
-                        if (timeSinceLastSegments > 300)
-                        {
-                            Logger.Warn($"5min elapsed since last new segments, marking task {task.Id} as finished");
-                            LiveFinishedDic[task.Id] = true;
-                            BlockDic[task.Id].Complete();
-                        }
+                        Logger.Warn($"2min elapsed since last new segments, marking task {task.Id} as finished");
+                        LiveFinishedDic[task.Id] = true;
+                        BlockDic[task.Id].Complete();
                     }
+                } else {
+                    var blockCount = BlockDic[task.Id].Count;
+                    Logger.Warn($"No new segments for {task.Id} but {blockCount} pending");
                 }
 
                 if (!STOP_FLAG && RefreshedDurDic[task.Id] >= DownloaderConfig.MyOptions.LiveRecordLimit?.TotalSeconds)
@@ -732,7 +742,10 @@ internal class SimpleLiveRecordManager2
                 // Logger.WarnMarkUp($"wait {waitSec}s");
                 if (!STOP_FLAG) await Task.Delay(WAIT_SEC * 1000, CancellationTokenSource.Token);
                 // 刷新列表
-                if (!STOP_FLAG) await StreamExtractor.RefreshPlayListAsync(dic.Keys.ToList());
+                if (!STOP_FLAG) {
+                    Logger.Warn("Fetching playlist");
+                    await StreamExtractor.RefreshPlayListAsync(dic.Keys.ToList());
+                }
             }
             catch (OperationCanceledException oce) when (oce.CancellationToken == CancellationTokenSource.Token)
             {
@@ -749,6 +762,7 @@ internal class SimpleLiveRecordManager2
                 }
             }
         }
+        Logger.Warn("Out of PlayListProduceAsync");
     }
 
     private void FilterMediaSegments(StreamSpec streamSpec, ProgressTask task, bool allHasDatetime, bool allSamePath)
