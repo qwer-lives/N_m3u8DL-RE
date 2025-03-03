@@ -217,6 +217,7 @@ internal class HLSExtractor : IExtractor
         string? line;
         bool expectSegment = false;
         bool isEndlist = false;
+        bool segmentsAfterEnd = false;
         long segIndex = 0;
         bool isAd = false;
         long startIndex;
@@ -238,7 +239,6 @@ internal class HLSExtractor : IExtractor
         MediaPart mediaPart = new();
         MediaSegment segment = new();
         List<MediaSegment> segments = [];
-
 
         while ((line = sr.ReadLine()) != null)
         {
@@ -339,15 +339,17 @@ internal class HLSExtractor : IExtractor
             // m3u8主体结束
             else if (line.StartsWith(HLSTags.ext_x_endlist))
             {
-                if (segments.Count > 0)
+                /*if (segments.Count > 0)
                 {
                     mediaParts.Add(new MediaPart()
                     {
                         MediaSegments = segments
                     });
                 }
-                segments = new();
+                segments = new();*/
                 isEndlist = true;
+                Logger.Warn("Found endlist");
+                Logger.Warn(M3u8Content);
             }
             // #EXT-X-MAP
             else if (line.StartsWith(HLSTags.ext_x_map))
@@ -373,9 +375,12 @@ internal class HLSExtractor : IExtractor
                     playlist.MediaInit.EncryptInfo.IV = currentEncryptInfo.IV ?? HexUtil.HexToBytes(Convert.ToString(segIndex, 16).PadLeft(32, '0'));
                 }
                 // 遇到了其他的map，说明已经不是一个视频了，全部丢弃即可
+                // Ignore
                 else
                 {
-                    if (segments.Count > 0)
+                    Logger.Warn("Found extra map");
+                    Logger.Warn(M3u8Content);
+                    /*if (segments.Count > 0)
                     {
                         mediaParts.Add(new MediaPart()
                         {
@@ -387,7 +392,7 @@ internal class HLSExtractor : IExtractor
                     {
                         isEndlist = true;
                         break;
-                    }
+                    }*/
                 }
             }
             // 评论行不解析
@@ -397,6 +402,10 @@ internal class HLSExtractor : IExtractor
             // 解析分片的地址
             else if (expectSegment)
             {
+                if (isEndlist)
+                {
+                    segmentsAfterEnd = true;
+                }
                 var segUrl = PreProcessUrl(ParserUtil.CombineURL(BaseUrl, line));
                 segment.Url = segUrl;
                 segments.Add(segment);
@@ -422,7 +431,8 @@ internal class HLSExtractor : IExtractor
         }
 
         // 直播的情况，无法遇到m3u8结束标记，需要手动将segments加入parts
-        if (!isEndlist)
+        //if (!isEndlist)
+        if (segments.Count > 0)
         {
             mediaParts.Add(new MediaPart()
             {
@@ -431,7 +441,7 @@ internal class HLSExtractor : IExtractor
         }
 
         playlist.MediaParts = mediaParts;
-        playlist.IsLive = !isEndlist;
+        playlist.IsLive = !isEndlist || segmentsAfterEnd;
 
         // 直播刷新间隔
         if (playlist.IsLive)
@@ -566,6 +576,9 @@ internal class HLSExtractor : IExtractor
             {
                 lists[i].Extension = lists[i].Playlist!.MediaInit != null ? "m4s" : "ts";
             }
+            var mediaCount = lists[i].Playlist!.MediaParts.Count;
+            var isLive = lists[i].Playlist!.IsLive;
+            Logger.Warn($"Refreshed playlist {i}, mediaCount = {mediaCount}, live = {isLive}");
         }
     }
 
