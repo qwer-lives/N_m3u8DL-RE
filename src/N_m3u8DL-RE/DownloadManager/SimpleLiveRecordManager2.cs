@@ -529,7 +529,7 @@ internal class SimpleLiveRecordManager2
                     else 
                     {
                         // 创建管道
-                        output = Path.ChangeExtension(output, ".ts");
+                        output = Path.ChangeExtension(output, ".mkv");
                         var pipeName = $"RE_pipe_{Guid.NewGuid()}";
                         fileOutputStream = PipeUtil.CreatePipe(pipeName);
                         Logger.InfoMarkUp($"{ResString.namedPipeCreated} [cyan]{pipeName.EscapeMarkup()}[/]");
@@ -620,7 +620,7 @@ internal class SimpleLiveRecordManager2
                 break;
         }
         
-        Logger.Warn("Out of RecordStreamAsync");
+        Logger.Info("Out of RecordStreamAsync");
         if (fileOutputStream == null) return true;
         
         if (!DownloaderConfig.MyOptions.LivePipeMux)
@@ -660,9 +660,8 @@ internal class SimpleLiveRecordManager2
 
                 // 如果 MediaParts 为空，播放列表可能已损坏，跳过并下次重试
                 var timeSinceLastSegments = (DateTime.Now - LastNewSegmentsTimeDic[task.Id]).TotalSeconds;
-                Logger.Warn($"{timeSinceLastSegments} elapsed since last new segments");
-                        
                 if (streamSpec.Playlist!.MediaParts.Count == 0) {
+                    Logger.Warn($"{timeSinceLastSegments} elapsed since last new segments");
                     if (timeSinceLastSegments > 120)
                     {
                         Logger.Warn($"2min elapsed since last new segments, marking task {task.Id} as finished");
@@ -698,21 +697,21 @@ internal class SimpleLiveRecordManager2
                 }
                 else if (BlockDic[task.Id].Count == 0)
                 {
-                    /*if (!streamSpec.Playlist!.IsLive)
+                    if (!streamSpec.Playlist!.IsLive)
                     {
-                        Logger.Warn($"Found end of playlist, marking task {task.Id} as finished");
+                        Logger.Info($"Found end of playlist with no new segments, marking task {task.Id} as finished");
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
-                    }*/
-                    if (timeSinceLastSegments > 120)
+                    }
+                    else if (timeSinceLastSegments > 120)
                     {
-                        Logger.Warn($"2min elapsed since last new segments, marking task {task.Id} as finished");
+                        Logger.Info($"2min elapsed since last new segments, marking task {task.Id} as finished");
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
                     }
                 } else {
                     var blockCount = BlockDic[task.Id].Count;
-                    Logger.Warn($"No new segments for {task.Id} but {blockCount} pending");
+                    Logger.Info($"No new segments for {task.Id} but {blockCount} pending");
                 }
 
                 if (!STOP_FLAG && RefreshedDurDic[task.Id] >= DownloaderConfig.MyOptions.LiveRecordLimit?.TotalSeconds)
@@ -742,10 +741,7 @@ internal class SimpleLiveRecordManager2
                 // Logger.WarnMarkUp($"wait {waitSec}s");
                 if (!STOP_FLAG) await Task.Delay(WAIT_SEC * 1000, CancellationTokenSource.Token);
                 // 刷新列表
-                if (!STOP_FLAG) {
-                    Logger.Warn("Fetching playlist");
-                    await StreamExtractor.RefreshPlayListAsync(dic.Keys.ToList());
-                }
+                if (!STOP_FLAG) await StreamExtractor.RefreshPlayListAsync(dic.Keys.ToList());
             }
             catch (OperationCanceledException oce) when (oce.CancellationToken == CancellationTokenSource.Token)
             {
@@ -762,7 +758,7 @@ internal class SimpleLiveRecordManager2
                 }
             }
         }
-        Logger.Warn("Out of PlayListProduceAsync");
+        Logger.Info("Out of PlayListProduceAsync");
     }
 
     private void FilterMediaSegments(StreamSpec streamSpec, ProgressTask task, bool allHasDatetime, bool allSamePath)

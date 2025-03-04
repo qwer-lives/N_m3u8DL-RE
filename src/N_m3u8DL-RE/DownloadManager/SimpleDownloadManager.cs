@@ -54,11 +54,11 @@ internal class SimpleDownloadManager
             Logger.WarnMarkUp($"[darkorange3_1]{ResString.autoBinaryMerge2}[/]");
         }
 
-        if (DownloaderConfig.MyOptions.MuxAfterDone && mediainfos.Any(m => m.DolbyVison))
+        /*if (DownloaderConfig.MyOptions.MuxAfterDone && mediainfos.Any(m => m.DolbyVison))
         {
             DownloaderConfig.MyOptions.MuxAfterDone = false;
             Logger.WarnMarkUp($"[darkorange3_1]{ResString.autoBinaryMerge5}[/]");
-        }
+        }*/
 
         if (mediainfos.Where(m => m.Type == "Audio").All(m => m.BaseInfo!.Contains("aac")))
         {
