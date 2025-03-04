@@ -348,8 +348,8 @@ internal class HLSExtractor : IExtractor
                 }
                 segments = new();*/
                 isEndlist = true;
-                Logger.Warn("Found endlist");
-                Logger.Warn(M3u8Content);
+                //Logger.Info("Found endlist");
+                //Logger.Info(M3u8Content);
             }
             // #EXT-X-MAP
             else if (line.StartsWith(HLSTags.ext_x_map))
@@ -379,7 +379,7 @@ internal class HLSExtractor : IExtractor
                 else
                 {
                     Logger.Warn("Found extra map");
-                    Logger.Warn(M3u8Content);
+                    Logger.Info(M3u8Content);
                     /*if (segments.Count > 0)
                     {
                         mediaParts.Add(new MediaPart()
@@ -578,7 +578,7 @@ internal class HLSExtractor : IExtractor
             }
             var mediaCount = lists[i].Playlist!.MediaParts.Count;
             var isLive = lists[i].Playlist!.IsLive;
-            Logger.Warn($"Refreshed playlist {i}, mediaCount = {mediaCount}, live = {isLive}");
+            //Logger.Info($"Refreshed playlist {i}, mediaCount = {mediaCount}, live = {isLive}");
         }
     }
 

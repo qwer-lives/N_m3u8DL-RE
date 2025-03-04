@@ -83,7 +83,7 @@ internal static class PipeUtil
         }
         else
         {
-            command.Append($" -f mpegts -shortest \"{outputPath}\"");
+            command.Append($" -shortest \"{outputPath}\"");
         }
 
         using var p = new Process();
