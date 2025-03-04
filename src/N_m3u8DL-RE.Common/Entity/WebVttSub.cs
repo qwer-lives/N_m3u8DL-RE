@@ -201,7 +201,9 @@ public partial class WebVttSub
             time += Convert.ToInt32(parts.Last().PadRight(3, '0'));
             str = parts.First();
         }
-        var t = str.Split(':').Reverse().ToList();
+        string[] s1 = str.Split(':');
+        Array.Reverse(s1);
+        var t = s1.ToList();
         for (int i = 0; i < t.Count; i++)
         {
             time += (long)Math.Pow(60, i) * Convert.ToInt32(t[i]) * 1000;

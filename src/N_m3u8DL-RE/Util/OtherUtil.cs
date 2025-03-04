@@ -70,7 +70,8 @@ internal static partial class OtherUtil
         var hours = -1;
         var mins = -1;
         var secs = -1;
-        arr.Reverse().Select(i => Convert.ToInt32(i)).ToList().ForEach(item =>
+        Array.Reverse(arr);
+        arr.Select(i => Convert.ToInt32(i)).ToList().ForEach(item =>
         {
             if (secs == -1) secs = item;
             else if (mins == -1) mins = item;
