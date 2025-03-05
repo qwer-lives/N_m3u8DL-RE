@@ -216,6 +216,7 @@ internal class HLSExtractor : IExtractor
         using StringReader sr = new StringReader(M3u8Content);
         string? line;
         bool expectSegment = false;
+        bool isLive = !M3u8Content.Contains(HLSTags.ext_x_endlist);
         bool isEndlist = false;
         bool segmentsAfterEnd = false;
         long segIndex = 0;
@@ -286,6 +287,8 @@ internal class HLSExtractor : IExtractor
             // 解析不连续标记，需要单独合并（timestamp不同）
             else if (line.StartsWith(HLSTags.ext_x_discontinuity))
             {
+                // Ignore discontinuities for lives
+                if (isLive) continue;
                 // 修复YK去除广告后的遗留问题
                 if (hasAd && mediaParts.Count > 0)
                 {
@@ -339,17 +342,18 @@ internal class HLSExtractor : IExtractor
             // m3u8主体结束
             else if (line.StartsWith(HLSTags.ext_x_endlist))
             {
-                /*if (segments.Count > 0)
+                isEndlist = true;
+                // Don't stop for lives, just in case
+                if (isLive) continue;
+                
+                if (segments.Count > 0)
                 {
                     mediaParts.Add(new MediaPart()
                     {
                         MediaSegments = segments
                     });
                 }
-                segments = new();*/
-                isEndlist = true;
-                //Logger.Info("Found endlist");
-                //Logger.Info(M3u8Content);
+                segments = new();
             }
             // #EXT-X-MAP
             else if (line.StartsWith(HLSTags.ext_x_map))
@@ -375,12 +379,12 @@ internal class HLSExtractor : IExtractor
                     playlist.MediaInit.EncryptInfo.IV = currentEncryptInfo.IV ?? HexUtil.HexToBytes(Convert.ToString(segIndex, 16).PadLeft(32, '0'));
                 }
                 // 遇到了其他的map，说明已经不是一个视频了，全部丢弃即可
-                // Ignore
                 else
                 {
-                    Logger.Warn("Found extra map");
-                    Logger.Info(M3u8Content);
-                    /*if (segments.Count > 0)
+                    // Ignore for lives
+                    if (isLive) continue;
+                    
+                    if (segments.Count > 0)
                     {
                         mediaParts.Add(new MediaPart()
                         {
@@ -392,7 +396,7 @@ internal class HLSExtractor : IExtractor
                     {
                         isEndlist = true;
                         break;
-                    }*/
+                    }
                 }
             }
             // 评论行不解析
@@ -405,6 +409,8 @@ internal class HLSExtractor : IExtractor
                 if (isEndlist)
                 {
                     segmentsAfterEnd = true;
+                    Logger.Warn("Found segments after end, should never happen. Playlist:");
+                    Logger.Warn(M3u8Content);
                 }
                 var segUrl = PreProcessUrl(ParserUtil.CombineURL(BaseUrl, line));
                 segment.Url = segUrl;
@@ -431,7 +437,6 @@ internal class HLSExtractor : IExtractor
         }
 
         // 直播的情况，无法遇到m3u8结束标记，需要手动将segments加入parts
-        //if (!isEndlist)
         if (segments.Count > 0)
         {
             mediaParts.Add(new MediaPart()
@@ -441,7 +446,7 @@ internal class HLSExtractor : IExtractor
         }
 
         playlist.MediaParts = mediaParts;
-        playlist.IsLive = !isEndlist || segmentsAfterEnd;
+        playlist.IsLive = isLive || segmentsAfterEnd;
 
         // 直播刷新间隔
         if (playlist.IsLive)
@@ -578,7 +583,7 @@ internal class HLSExtractor : IExtractor
             }
             var mediaCount = lists[i].Playlist!.MediaParts.Count;
             var isLive = lists[i].Playlist!.IsLive;
-            //Logger.Info($"Refreshed playlist {i}, mediaCount = {mediaCount}, live = {isLive}");
+            Logger.Info($"Refreshed playlist {i}, mediaCount = {mediaCount}, live = {isLive}");
         }
     }
 

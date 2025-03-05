@@ -529,7 +529,7 @@ internal class SimpleLiveRecordManager2
                     else 
                     {
                         // 创建管道
-                        output = Path.ChangeExtension(output, ".mkv");
+                        output = Path.ChangeExtension(output, ".mp4");
                         var pipeName = $"RE_pipe_{Guid.NewGuid()}";
                         fileOutputStream = PipeUtil.CreatePipe(pipeName);
                         Logger.InfoMarkUp($"{ResString.namedPipeCreated} [cyan]{pipeName.EscapeMarkup()}[/]");
@@ -639,6 +639,7 @@ internal class SimpleLiveRecordManager2
         fileOutputStream.Close();
         fileOutputStream.Dispose();
 
+        Logger.Info("Out of RecordStreamAsync for real");
         return true;
     }
 
@@ -897,16 +898,22 @@ internal class SimpleLiveRecordManager2
                 var task = kp.Value;
                 var consumerTask = RecordStreamAsync(kp.Key, task, SpeedContainerDic[task.Id], BlockDic[task.Id]);
                 Results[kp.Key] = await consumerTask;
+                var res = Results[kp.Key];
+                Logger.Info($"For task {kp.Key} got result {res}");
             });
+            Logger.Info("Producer and consumer tasks finished");
         });
 
         var success = Results.Values.All(v => v == true);
 
+        Logger.Info($"Success {success}");
         // 删除临时文件夹
         if (DownloaderConfig.MyOptions is { SkipMerge: false, DelAfterDone: true } && success)
         {
+            Logger.Info("Inside if 1");
             foreach (var item in StreamExtractor.RawFiles)
             {
+                Logger.Info("Inside if 1 1");
                 var file = Path.Combine(DownloaderConfig.DirPrefix, item.Key);
                 if (File.Exists(file)) File.Delete(file);
             }
@@ -916,14 +923,17 @@ internal class SimpleLiveRecordManager2
         // 混流
         if (success && DownloaderConfig.MyOptions.MuxAfterDone && OutputFiles.Count > 0)
         {
+            Logger.Info("Inside if 2");
             OutputFiles = OutputFiles.OrderBy(o => o.Index).ToList();
             // 是否跳过字幕
             if (DownloaderConfig.MyOptions.MuxOptions!.SkipSubtitle)
             {
+                Logger.Info("Inside if 2 1");
                 OutputFiles = OutputFiles.Where(o => o.MediaType != MediaType.SUBTITLES).ToList();
             }
             if (DownloaderConfig.MyOptions.MuxImports != null)
             {
+                Logger.Info("Inside if 2 2");
                 OutputFiles.AddRange(DownloaderConfig.MyOptions.MuxImports);
             }
             OutputFiles.ForEach(f => Logger.WarnMarkUp($"[grey]{Path.GetFileName(f.FilePath).EscapeMarkup()}[/]"));
@@ -961,6 +971,7 @@ internal class SimpleLiveRecordManager2
             }
         }
 
+        Logger.Info("Right before return");
         return success;
     }
 }

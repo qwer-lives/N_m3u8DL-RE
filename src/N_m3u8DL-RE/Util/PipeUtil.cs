@@ -34,6 +34,7 @@ internal static class PipeUtil
 
     public static async Task<bool> StartPipeMuxAsync(string binary, string[] pipeNames, string outputPath)
     {
+        Logger.Info("Start StartPipeMuxAsync");
         return await Task.Run(async () =>
         {
             await Task.Delay(1000);
@@ -44,7 +45,7 @@ internal static class PipeUtil
     public static bool StartPipeMux(string binary, string[] pipeNames, string outputPath)
     {
         string dateString = DateTime.Now.ToString("o");
-        StringBuilder command = new StringBuilder("-y -fflags +genpts -loglevel quiet ");
+        StringBuilder command = new StringBuilder("-y -fflags +genpts ");// -loglevel quiet ");
 
         string customDest = OtherUtil.GetEnvironmentVariable("RE_LIVE_PIPE_OPTIONS");
         string pipeDir = OtherUtil.GetEnvironmentVariable("RE_LIVE_PIPE_TMP_DIR", Path.GetTempPath());
