@@ -35,6 +35,7 @@ internal static class PipeUtil
 
     public static async Task<bool> StartPipeMuxAsync(string binary, string[] pipeNames, string outputPath)
     {
+        Logger.Info("Start StartPipeMuxAsync");
         return await Task.Run(async () =>
         {
             await Task.Delay(1000);
