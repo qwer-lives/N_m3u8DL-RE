@@ -583,7 +583,7 @@ internal class HLSExtractor : IExtractor
             }
             var mediaCount = lists[i].Playlist!.MediaParts.Count;
             var isLive = lists[i].Playlist!.IsLive;
-            Logger.Info($"Refreshed playlist {i}, mediaCount = {mediaCount}, live = {isLive}");
+            Logger.Debug($"Refreshed playlist {i}, mediaCount = {mediaCount}, live = {isLive}");
         }
     }
 

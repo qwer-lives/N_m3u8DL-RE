@@ -270,7 +270,7 @@ internal class MyOption
     /// <summary>
     /// See: <see cref="CommandInvoker.LivePipeMux"/>.
     /// </summary>
-    public bool LivePipeMux { get; set; }
+    public LivePipeMuxOption? LivePipeMux { get; set; }
     /// <summary>
     /// See: <see cref="CommandInvoker.LiveFixVttByAudio"/>.
     /// </summary>

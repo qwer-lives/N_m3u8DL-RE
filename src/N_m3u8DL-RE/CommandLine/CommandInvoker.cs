@@ -94,7 +94,6 @@ internal static partial class CommandInvoker
     private static readonly Option<bool> LivePerformAsVod = new(["--live-perform-as-vod"], description: ResString.cmd_livePerformAsVod, getDefaultValue: () => false);
     private static readonly Option<bool> LiveRealTimeMerge = new(["--live-real-time-merge"], description: ResString.cmd_liveRealTimeMerge, getDefaultValue: () => false);
     private static readonly Option<bool> LiveKeepSegments = new(["--live-keep-segments"], description: ResString.cmd_liveKeepSegments, getDefaultValue: () => true);
-    private static readonly Option<bool> LivePipeMux = new(["--live-pipe-mux"], description: ResString.cmd_livePipeMux, getDefaultValue: () => false);
     private static readonly Option<TimeSpan?> LiveRecordLimit = new(["--live-record-limit"], description: ResString.cmd_liveRecordLimit, parseArgument: ParseLiveLimit) { ArgumentHelpName = "HH:mm:ss" };
     private static readonly Option<int?> LiveWaitTime = new(["--live-wait-time"], description: ResString.cmd_liveWaitTime) { ArgumentHelpName = "SEC" };
     private static readonly Option<int> LiveTakeCount = new(["--live-take-count"], description: ResString.cmd_liveTakeCount, getDefaultValue: () => 16) { ArgumentHelpName = "NUM" };
@@ -102,6 +101,7 @@ internal static partial class CommandInvoker
 
 
     // 复杂命令行如下
+    private static readonly Option<LivePipeMuxOption?> LivePipeMux = new(["--live-pipe-mux"], description: ResString.cmd_livePipeMux, parseArgument: ParseLivePipeMux) { ArgumentHelpName = "OPTIONS" };
     private static readonly Option<MuxOptions?> MuxAfterDone = new(["-M", "--mux-after-done"], description: ResString.cmd_muxAfterDone, parseArgument: ParseMuxAfterDone) { ArgumentHelpName = "OPTIONS" };
     private static readonly Option<List<OutputFile>> MuxImports = new("--mux-import", description: ResString.cmd_muxImport, parseArgument: ParseImports) { Arity = ArgumentArity.OneOrMore, AllowMultipleArgumentsPerToken = false, ArgumentHelpName = "OPTIONS" };
     private static readonly Option<StreamFilter?> VideoFilter = new(["-sv", "--select-video"], description: ResString.cmd_selectVideo, parseArgument: ParseStreamFilter) { ArgumentHelpName = "OPTIONS" };
@@ -515,6 +515,25 @@ internal static partial class CommandInvoker
             SkipSubtitle = skipSub == "true",
             BinPath = bin_path == "auto" ? null : bin_path
         };
+    }
+
+    private static LivePipeMuxOption? ParseLivePipeMux(ArgumentResult result)
+    {
+        if (result.Tokens.Count == 0) return new LivePipeMuxOption(false);
+        var input = result.Tokens[0].Value;
+
+        if (input.Equals("false",StringComparison.OrdinalIgnoreCase) )
+        {
+            return new LivePipeMuxOption(false);
+        }
+
+        if (!Regex.IsMatch(input, @"^[a-zA-Z0-9]+$"))
+        {
+            result.ErrorMessage = "Invalid extension for --live-pipe-mux. Use only alphanumeric characters (e.g., 'mkv', 'ts').";
+            return null;
+        }
+
+        return new LivePipeMuxOption(true, input);
     }
 
     class MyOptionBinder : BinderBase<MyOption>
