@@ -521,17 +521,17 @@ internal class SimpleLiveRecordManager2
                     {
                         Logger.WarnMarkUp($"{Path.GetFileName(output)} => {Path.GetFileName(output = Path.ChangeExtension(output, $"copy" + Path.GetExtension(output)))}");
                     }
-
-                    if (!DownloaderConfig.MyOptions.LivePipeMux.Enabled || streamSpec.MediaType == MediaType.SUBTITLES)
+                    if (!DownloaderConfig.MyOptions.LivePipeMux || streamSpec.MediaType == MediaType.SUBTITLES)
                     {
                         fileOutputStream = new FileStream(output, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
                     }
                     else 
                     {
                         // 创建管道
-                        var ext = DownloaderConfig.MyOptions.LivePipeMux.Extension ?? "mkv";
+                        var ext = DownloaderConfig.MyOptions.LivePipeMuxOptions.Extension ?? "mkv";
                         output = Path.ChangeExtension(output, $".{ext}");
                         
+                        Logger.Info("HERE 6");
                         var pipeName = $"RE_pipe_{Guid.NewGuid()}";
                         fileOutputStream = PipeUtil.CreatePipe(pipeName);
                         Logger.InfoMarkUp($"{ResString.namedPipeCreated} [cyan]{pipeName.EscapeMarkup()}[/]");
@@ -625,7 +625,7 @@ internal class SimpleLiveRecordManager2
         Logger.Debug("Out of RecordStreamAsync");
         if (fileOutputStream == null) return true;
         
-        if (!DownloaderConfig.MyOptions.LivePipeMux.Enabled)
+        if (!DownloaderConfig.MyOptions.LivePipeMux)
         {
             // 记录所有文件信息
             OutputFiles.Add(new OutputFile()

@@ -150,6 +150,10 @@ internal class MyOption
     /// </summary>
     public bool MuxAfterDone { get; set; }
     /// <summary>
+    /// See: <see cref="CommandInvoker.LivePipeMux"/>.
+    /// </summary>
+    public bool LivePipeMux { get; set; }
+    /// <summary>
     /// See: <see cref="CommandInvoker.ConcurrentDownload"/>.
     /// </summary>
     public bool ConcurrentDownload { get; set; }
@@ -270,7 +274,7 @@ internal class MyOption
     /// <summary>
     /// See: <see cref="CommandInvoker.LivePipeMux"/>.
     /// </summary>
-    public LivePipeMuxOption? LivePipeMux { get; set; }
+    public LivePipeMuxOptions? LivePipeMuxOptions { get; set; }
     /// <summary>
     /// See: <see cref="CommandInvoker.LiveFixVttByAudio"/>.
     /// </summary>

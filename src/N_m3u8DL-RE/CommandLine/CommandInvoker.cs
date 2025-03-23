@@ -101,7 +101,7 @@ internal static partial class CommandInvoker
 
 
     // 复杂命令行如下
-    private static readonly Option<LivePipeMuxOption?> LivePipeMux = new(["--live-pipe-mux"], description: ResString.cmd_livePipeMux, parseArgument: ParseLivePipeMux) { ArgumentHelpName = "OPTIONS" };
+    private static readonly Option<LivePipeMuxOptions?> LivePipeMux = new(["--live-pipe-mux"], description: ResString.cmd_livePipeMux, parseArgument: ParseLivePipeMux) { ArgumentHelpName = "OPTIONS" };
     private static readonly Option<MuxOptions?> MuxAfterDone = new(["-M", "--mux-after-done"], description: ResString.cmd_muxAfterDone, parseArgument: ParseMuxAfterDone) { ArgumentHelpName = "OPTIONS" };
     private static readonly Option<List<OutputFile>> MuxImports = new("--mux-import", description: ResString.cmd_muxImport, parseArgument: ParseImports) { Arity = ArgumentArity.OneOrMore, AllowMultipleArgumentsPerToken = false, ArgumentHelpName = "OPTIONS" };
     private static readonly Option<StreamFilter?> VideoFilter = new(["-sv", "--select-video"], description: ResString.cmd_selectVideo, parseArgument: ParseStreamFilter) { ArgumentHelpName = "OPTIONS" };
@@ -517,23 +517,30 @@ internal static partial class CommandInvoker
         };
     }
 
-    private static LivePipeMuxOption? ParseLivePipeMux(ArgumentResult result)
+    private static LivePipeMuxOptions? ParseLivePipeMux(ArgumentResult result)
     {
-        if (result.Tokens.Count == 0) return new LivePipeMuxOption(false);
-        var input = result.Tokens[0].Value;
-
-        if (input.Equals("false",StringComparison.OrdinalIgnoreCase) )
+        var extension = "mkv";
+        
+        var v = result.Tokens[0].Value;
+        if (result.Tokens.Count > 0)
         {
-            return new LivePipeMuxOption(false);
+            var input = result.Tokens[0].Value;
+            if (!input.Equals("true", StringComparison.OrdinalIgnoreCase) )
+            {
+                string[] supportedFormats = { "mp4", "mkv", "ts" };
+                if (!supportedFormats.Contains(input))
+                {
+                    result.ErrorMessage = "Invalid extension for --live-pipe-mux.";
+                    return null;
+                }
+                extension = input;
+            }
         }
 
-        if (!Regex.IsMatch(input, @"^[a-zA-Z0-9]+$"))
+        return new LivePipeMuxOptions()
         {
-            result.ErrorMessage = "Invalid extension for --live-pipe-mux. Use only alphanumeric characters (e.g., 'mkv', 'ts').";
-            return null;
-        }
-
-        return new LivePipeMuxOption(true, input);
+            Extension = extension
+        };
     }
 
     class MyOptionBinder : BinderBase<MyOption>
@@ -590,7 +597,6 @@ internal static partial class CommandInvoker
                 LiveRecordLimit = bindingContext.ParseResult.GetValueForOption(LiveRecordLimit),
                 TaskStartAt = bindingContext.ParseResult.GetValueForOption(TaskStartAt),
                 LivePerformAsVod = bindingContext.ParseResult.GetValueForOption(LivePerformAsVod),
-                LivePipeMux = bindingContext.ParseResult.GetValueForOption(LivePipeMux),
                 LiveFixVttByAudio = bindingContext.ParseResult.GetValueForOption(LiveFixVttByAudio),
                 UseSystemProxy = bindingContext.ParseResult.GetValueForOption(UseSystemProxy),
                 CustomProxy = bindingContext.ParseResult.GetValueForOption(CustomProxy),
@@ -623,12 +629,18 @@ internal static partial class CommandInvoker
 
             // 混流设置
             var muxAfterDoneValue = bindingContext.ParseResult.GetValueForOption(MuxAfterDone);
-            if (muxAfterDoneValue == null) return option;
+            if (muxAfterDoneValue != null) {
+                option.MuxAfterDone = true;
+                option.MuxOptions = muxAfterDoneValue;
+                if (muxAfterDoneValue.UseMkvmerge) option.MkvmergeBinaryPath = muxAfterDoneValue.BinPath;
+                else option.FFmpegBinaryPath ??= muxAfterDoneValue.BinPath;
+            }
             
-            option.MuxAfterDone = true;
-            option.MuxOptions = muxAfterDoneValue;
-            if (muxAfterDoneValue.UseMkvmerge) option.MkvmergeBinaryPath = muxAfterDoneValue.BinPath;
-            else option.FFmpegBinaryPath ??= muxAfterDoneValue.BinPath;
+            var livePipeMuxValue = bindingContext.ParseResult.GetValueForOption(LivePipeMux);
+            if (livePipeMuxValue != null) {
+                option.LivePipeMux = true;
+                option.LivePipeMuxOptions = livePipeMuxValue;
+            }
 
             return option;
         }

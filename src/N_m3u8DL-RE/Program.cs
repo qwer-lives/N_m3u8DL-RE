@@ -129,7 +129,7 @@ internal class Program
         }
 
         // LivePipeMux开启时 LiveRealTimeMerge必须开启
-        if (option is { LivePipeMux.Enabled: true, LiveRealTimeMerge: false })
+        if (option is { LivePipeMux: true, LiveRealTimeMerge: false })
         {
             Logger.WarnMarkUp("LivePipeMux detected, forced enable LiveRealTimeMerge");
             option.LiveRealTimeMerge = true;
