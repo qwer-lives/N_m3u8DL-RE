@@ -65,10 +65,10 @@ internal static class PipeUtil
                 command.Append($" -i \"{Path.Combine(pipeDir, item)}\" ");
         }
 
-        for (var i = 0; i < pipeNames.Length; i++)
+        /*for (var i = 0; i < pipeNames.Length; i++)
         {
-            command.Append($" -map {i} ");
-        }
+            command.Append($" -map {i} -0:d");
+        }*/
 
         command.Append(" -strict unofficial -c copy ");
         command.Append($" -metadata date=\"{dateString}\" ");
@@ -97,7 +97,7 @@ internal static class PipeUtil
             CreateNoWindow = true,
             UseShellExecute = false
         };
-        // p.StartInfo.Environment.Add("FFREPORT", "file=ffreport.log:level=42");
+        //p.StartInfo.Environment.Add("FFREPORT", "file=ffreport.log:level=42");
         p.Start();
         p.WaitForExit();
 

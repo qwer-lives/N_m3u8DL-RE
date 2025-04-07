@@ -531,7 +531,6 @@ internal class SimpleLiveRecordManager2
                         var ext = DownloaderConfig.MyOptions.LivePipeMuxOptions.Extension ?? "mkv";
                         output = Path.ChangeExtension(output, $".{ext}");
                         
-                        Logger.Info("HERE 6");
                         var pipeName = $"RE_pipe_{Guid.NewGuid()}";
                         fileOutputStream = PipeUtil.CreatePipe(pipeName);
                         Logger.InfoMarkUp($"{ResString.namedPipeCreated} [cyan]{pipeName.EscapeMarkup()}[/]");
@@ -665,9 +664,9 @@ internal class SimpleLiveRecordManager2
                 var timeSinceLastSegments = (DateTime.Now - LastNewSegmentsTimeDic[task.Id]).TotalSeconds;
                 if (streamSpec.Playlist!.MediaParts.Count == 0) {
                     Logger.Warn($"No media part found and {timeSinceLastSegments} elapsed since last new segments");
-                    if (timeSinceLastSegments > 120)
+                    if (timeSinceLastSegments > 20)
                     {
-                        Logger.Warn($"No media part found and 2min elapsed since last new segments, marking task {task.Id} as finished");
+                        Logger.Warn($"No media part found and 20sec elapsed since last new segments, marking task {task.Id} as finished");
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
                     }
@@ -706,9 +705,9 @@ internal class SimpleLiveRecordManager2
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
                     }
-                    else if (timeSinceLastSegments > 120)
+                    else if (timeSinceLastSegments > 20)
                     {
-                        Logger.Info($"2min elapsed since last new segments, marking task {task.Id} as finished");
+                        Logger.Info($"20sec elapsed since last new segment, marking task {task.Id} as finished");
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
                     }
