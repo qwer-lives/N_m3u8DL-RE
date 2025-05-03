@@ -94,6 +94,7 @@ internal static partial class CommandInvoker
     private static readonly Option<bool> LivePerformAsVod = new(["--live-perform-as-vod"], description: ResString.cmd_livePerformAsVod, getDefaultValue: () => false);
     private static readonly Option<bool> LiveRealTimeMerge = new(["--live-real-time-merge"], description: ResString.cmd_liveRealTimeMerge, getDefaultValue: () => false);
     private static readonly Option<bool> LiveKeepSegments = new(["--live-keep-segments"], description: ResString.cmd_liveKeepSegments, getDefaultValue: () => true);
+    private static readonly Option<int> LiveWaitTimeout = new(["--live-wait-timeout"], description: ResString.cmd_liveWaitTimeout, getDefaultValue: () => 20) { ArgumentHelpName = "SECONDS" };
     private static readonly Option<TimeSpan?> LiveRecordLimit = new(["--live-record-limit"], description: ResString.cmd_liveRecordLimit, parseArgument: ParseLiveLimit) { ArgumentHelpName = "HH:mm:ss" };
     private static readonly Option<int?> LiveWaitTime = new(["--live-wait-time"], description: ResString.cmd_liveWaitTime) { ArgumentHelpName = "SEC" };
     private static readonly Option<int> LiveTakeCount = new(["--live-take-count"], description: ResString.cmd_liveTakeCount, getDefaultValue: () => 16) { ArgumentHelpName = "NUM" };
@@ -594,6 +595,7 @@ internal static partial class CommandInvoker
                 DropSubtitleFilter = bindingContext.ParseResult.GetValueForOption(DropSubtitleFilter),
                 LiveRealTimeMerge = bindingContext.ParseResult.GetValueForOption(LiveRealTimeMerge),
                 LiveKeepSegments = bindingContext.ParseResult.GetValueForOption(LiveKeepSegments),
+                LiveWaitTimeout = bindingContext.ParseResult.GetValueForOption(LiveWaitTimeout),
                 LiveRecordLimit = bindingContext.ParseResult.GetValueForOption(LiveRecordLimit),
                 TaskStartAt = bindingContext.ParseResult.GetValueForOption(TaskStartAt),
                 LivePerformAsVod = bindingContext.ParseResult.GetValueForOption(LivePerformAsVod),
@@ -677,7 +679,7 @@ internal static partial class CommandInvoker
             MaxSpeed,
             MuxAfterDone,
             CustomHLSMethod, CustomHLSKey, CustomHLSIv, UseSystemProxy, CustomProxy, CustomRange, TaskStartAt,
-            LivePerformAsVod, LiveRealTimeMerge, LiveKeepSegments, LivePipeMux, LiveFixVttByAudio, LiveRecordLimit, LiveWaitTime, LiveTakeCount,
+            LivePerformAsVod, LiveRealTimeMerge, LiveKeepSegments, LiveWaitTimeout, LivePipeMux, LiveFixVttByAudio, LiveRecordLimit, LiveWaitTime, LiveTakeCount,
             MuxImports, VideoFilter, AudioFilter, SubtitleFilter, DropVideoFilter, DropAudioFilter, DropSubtitleFilter, AdKeywords, DisableUpdateCheck, AllowHlsMultiExtMap, MoreHelp
         };
 

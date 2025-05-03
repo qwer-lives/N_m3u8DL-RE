@@ -663,10 +663,11 @@ internal class SimpleLiveRecordManager2
                 // 如果 MediaParts 为空，播放列表可能已损坏，跳过并下次重试
                 var timeSinceLastSegments = (DateTime.Now - LastNewSegmentsTimeDic[task.Id]).TotalSeconds;
                 if (streamSpec.Playlist!.MediaParts.Count == 0) {
-                    Logger.Warn($"No media part found and {timeSinceLastSegments} elapsed since last new segments");
-                    if (timeSinceLastSegments > 20)
+                    int timeout = DownloaderConfig.MyOptions.LiveWaitTimeout;
+                    Logger.Warn($"No media part found and {timeSinceLastSegments:F2}s elapsed since last new segments");
+                    if (timeSinceLastSegments > timeout)
                     {
-                        Logger.Warn($"No media part found and 20sec elapsed since last new segments, marking task {task.Id} as finished");
+                        Logger.Warn($"No media part found and {timeout}s elapsed since last new segments, marking task {task.Id} as finished");
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
                     }
@@ -705,9 +706,10 @@ internal class SimpleLiveRecordManager2
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
                     }
-                    else if (timeSinceLastSegments > 20)
+                    else if (timeSinceLastSegments > DownloaderConfig.MyOptions.LiveWaitTimeout)
                     {
-                        Logger.Info($"20sec elapsed since last new segment, marking task {task.Id} as finished");
+                        int timeout = DownloaderConfig.MyOptions.LiveWaitTimeout;
+                        Logger.Info($"{timeout}s elapsed since last new segment, marking task {task.Id} as finished");
                         LiveFinishedDic[task.Id] = true;
                         BlockDic[task.Id].Complete();
                     }

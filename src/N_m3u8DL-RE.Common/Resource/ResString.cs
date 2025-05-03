@@ -84,6 +84,7 @@ public static class ResString
     public static string cmd_customProxy => GetText("cmd_customProxy");
     public static string cmd_customRange => GetText("cmd_customRange");
     public static string cmd_liveKeepSegments => GetText("cmd_liveKeepSegments");
+    public static string cmd_liveWaitTimeout => GetText("cmd_liveWaitTimeout");
     public static string cmd_livePipeMux => GetText("cmd_livePipeMux");
     public static string cmd_liveRecordLimit => GetText("cmd_liveRecordLimit");
     public static string cmd_taskStartAt => GetText("cmd_taskStartAt");

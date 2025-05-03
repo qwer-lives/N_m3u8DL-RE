@@ -166,6 +166,10 @@ internal class MyOption
     /// </summary>
     public bool LiveKeepSegments { get; set; }
     /// <summary>
+    /// See: <see cref="CommandInvoker.LiveWaitTimeout"/>.
+    /// </summary>
+    public int LiveWaitTimeout { get; set; }
+    /// <summary>
     /// See: <see cref="CommandInvoker.LivePerformAsVod"/>.
     /// </summary>
     public bool LivePerformAsVod { get; set; }

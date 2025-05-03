@@ -454,6 +454,12 @@ internal static class StaticText
             zhTW: "錄製直播並開啟即時合併時依然保留分片",
             enUS: "Keep segments when recording a live (liveRealTimeMerge enabled)"
         ),
+        ["cmd_liveWaitTimeout"] = new TextContainer
+        (
+            zhCN: "设置直播无新分片时多少秒后结束录制 (默认: 20)",
+            zhTW: "設置直播無新分片時多少秒後結束錄製 (預設: 20)",
+            enUS: "Set how many seconds to wait before ending recording when no new segments are found (Default: 20)"
+        ),
         ["cmd_liveRecordLimit"] = new TextContainer
         (
             zhCN: "录制直播时的录制时长限制",
